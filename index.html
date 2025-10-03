@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wish for Armstrong</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#60a5fa;--text:#e6eef8}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    body{background:linear-gradient(180deg,#081226 0%, #071022 60%);color:var(--text);display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+    .card{width:100%;max-width:800px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:28px;box-shadow:0 8px 30px rgba(2,6,23,0.6);z-index:2;position:relative}
+    h1{margin:0 0 8px;font-size:1.6rem;letter-spacing:0.4px}
+    p.lead{margin:0 0 18px;opacity:0.9}
+    .wish-area{min-height:180px;border-radius:12px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));backdrop-filter: blur(4px);box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);text-align:center}
+    .wish-text{font-size:1.05rem;line-height:1.6;opacity:0;transition:opacity 500ms ease, transform 600ms cubic-bezier(.2,.9,.25,1);transform:translateY(8px);white-space:pre-line}
+    .wish-text.visible{opacity:1;transform:none}
+    .controls{display:flex;gap:12px;align-items:center;margin-top:18px;justify-content:center}
+    button.btn{background:linear-gradient(90deg,var(--accent),#3b82f6);border:0;padding:10px 16px;border-radius:10px;color:#04263f;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.18);}
+    button.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.06)}
+    .note{margin-top:10px;font-size:0.86rem;opacity:0.8;text-align:center}
+    .wish-img{max-width:180px;margin:16px auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:none}
+    .wish-img.visible{display:block}
+
+    /* fireworks */
+    canvas.fireworks{position:absolute;inset:0;z-index:1;pointer-events:none}
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">A special wish for <strong>Armstrong</strong></h1>
+    <p class="lead">Click the button below to reveal a poetic wish with a surprise 🎉</p>
+
+    <div class="wish-area" aria-live="polite">
+      <img src="C:/Users/pc/Desktop/Pictures/Saved Pictures/car.webp" alt="Celebration image" id="wishImg" class="wish-img" />
+      <div id="wish" class="wish-text" aria-hidden="true"></div>
+    </div>
+
+    <div class="controls">
+      <button id="revealBtn" class="btn">Reveal the Wish ✨</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+    </div>
+    <p class="note">Save this as <code>armstrong_wish.html</code> and open in a browser.</p>
+  </div>
+
+  <canvas class="fireworks"></canvas>
+
+  <script>
+    const wishLines = [
+      "Armstrong, may your mornings wear the gentle gold of new beginnings,",
+      "and your nights be stitched with quiet triumphs and starlit calm.",
+      "May every step you take open a door to a kinder surprise,",
+      "and may laughter follow you like an old, loyal friend.",
+      "Dream boldly, live kindly — the world is brighter because you are in it."
+    ];
+
+    const revealBtn = document.getElementById('revealBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const wishEl = document.getElementById('wish');
+    const wishImg = document.getElementById('wishImg');
+
+    function typeText(lines){
+      wishEl.textContent = '';
+      let i = 0;
+      wishEl.classList.add('visible');
+      wishEl.setAttribute('aria-hidden','false');
+      function step(){
+        if(i < lines.length){
+          wishEl.textContent += lines[i] + "\\n";
+          i++;
+          setTimeout(step, 700);
+        }
+      }
+      step();
+    }
+
+    revealBtn.addEventListener('click', ()=>{
+      wishImg.classList.add('visible');
+      typeText(wishLines);
+      startFireworks();
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      wishEl.textContent = '';
+      wishImg.classList.remove('visible');
+      wishEl.classList.remove('visible');
+    });
+
+    // Fireworks animation
+    const canvas = document.querySelector('canvas.fireworks');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resize(){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle{
+      constructor(x,y,color){
+        this.x = x;this.y = y;
+        this.color = color;
+        this.radius = Math.random()*3+2;
+        this.angle = Math.random()*2*Math.PI;
+        this.speed = Math.random()*5+2;
+        this.life = 80+Math.random()*20;
+      }
+      update(){
+        this.x += Math.cos(this.angle)*this.speed;
+        this.y += Math.sin(this.angle)*this.speed;
+        this.speed *= 0.95;
+        this.life--;
+      }
+      draw(){
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+        ctx.fillStyle=this.color;
+        ctx.fill();
+      }
+    }
+
+    function createFirework(){
+      const x = Math.random()*canvas.width;
+      const y = Math.random()*canvas.height/2;
+      const colors = ['#ff6b6b','#feca57','#48dbfb','#1dd1a1','#5f27cd'];
+      for(let i=0;i<60;i++){
+        particles.push(new Particle(x,y,colors[Math.floor(Math.random()*colors.length)]));
+      }
+    }
+
+    function animate(){
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      particles.forEach((p,index)=>{
+        p.update();
+        p.draw();
+        if(p.life<=0) particles.splice(index,1);
+      });
+      requestAnimationFrame(animate);
+    }
+
+    function startFireworks(){
+      createFirework();
+      setInterval(createFirework,1500);
+      animate();
+    }
+  </script>
+</body>
+</html>
